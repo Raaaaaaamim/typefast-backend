@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: typefast-backend
+    env: bun
+    region: oregon
+    plan: starter
+    buildCommand: bun install && bun prisma generate
+    startCommand: bun prisma migrate deploy && bun src/index.ts
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
