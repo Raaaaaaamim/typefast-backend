@@ -1,0 +1,23 @@
+{
+  "name": "typefast-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "start": "bun src/index.ts",
+    "db:generate": "bun prisma generate",
+    "db:migrate": "bun prisma migrate deploy",
+    "db:push": "bun prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "6",
+    "@supabase/supabase-js": "latest",
+    "hono": "latest",
+    "jose": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "prisma": "6",
+    "typescript": "latest"
+  }
+}

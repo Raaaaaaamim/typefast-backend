@@ -1,0 +1,109 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String         @id
+  email         String         @unique
+  username      String?        @unique
+  avatarUrl     String?
+  bio           String?
+  isPublic      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  settings      Settings?
+  lessonHistory LessonResult[]
+  keyStats      KeyStats[]
+}
+
+model Settings {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  globalScale            Float    @default(0.9)
+  headerScale            Float    @default(0.9)
+  statsScale             Float    @default(1.0)
+  heatmapScale           Float    @default(0.9)
+  topSectionScale        Float    @default(0.9)
+  keyboardScale          Float    @default(0.85)
+  typingAreaScale        Float    @default(1.0)
+
+  keyboardPos            Json     // {x: number, y: number}
+  typingAreaPos          Json     // {x: number, y: number}
+  topSectionPos          Json     // {x: number, y: number}
+
+  cursorStyle            String   @default("line")
+  showKeyboard           Boolean  @default(true)
+  showHeader             Boolean  @default(true)
+  showHeaderBorder       Boolean  @default(false)
+  keyboardBaseColor      String   @default("#08080a")
+  keyColor               String   @default("#000000")
+  keyLetterColor         String   @default("#71717a")
+
+  soundEnabled           Boolean  @default(true)
+  soundVolume            Float    @default(0.5)
+  soundPack              String   @default("default")
+
+  wpmTarget              Int      @default(40)
+  stopCursorOnError      Boolean  @default(true)
+  forgiveErrors          Boolean  @default(false)
+  spaceSkipsWord         Boolean  @default(false)
+  monkeyTypeMode         Boolean  @default(false)
+  showWordWpm            Boolean  @default(false)
+
+  lessonWordCount        Int      @default(12)
+  pseudoRatio            Int      @default(30)
+  includeCapitals        Boolean  @default(false)
+  includePunctuation     Boolean  @default(false)
+  includeNumbers         Boolean  @default(false)
+  repeatEachWord         Boolean  @default(false)
+  unlockOnlyAboveTarget  Boolean  @default(true)
+  sortLettersByKeyboard  Boolean  @default(false)
+
+  updatedAt              DateTime @updatedAt
+}
+
+model LessonResult {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wpm         Float
+  accuracy    Float
+  score       Int
+  duration    Int
+  lessonText  String
+  timestamp   DateTime @default(now())
+  errorKeys   String[]
+  correctKeys String[]
+
+  replay      Replay?
+}
+
+model Replay {
+  id             String       @id @default(uuid())
+  lessonResultId String       @unique
+  lessonResult   LessonResult @relation(fields: [lessonResultId], references: [id], onDelete: Cascade)
+  keystrokes     Json         // Array<{key: string, timestamp: number, correct: boolean, position: number}>
+}
+
+model KeyStats {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key          String
+  confidence   Float    @default(0)
+  errors       Int      @default(0)
+  hits         Int      @default(0)
+  lastSpeed    Float    @default(0)
+  topSpeed     Float    @default(0)
+  speedHistory Float[]
+
+  @@unique([userId, key])
+}
