@@ -8,6 +8,15 @@ import lessonRoutes from './routes/lessons';
 import statsRoutes from './routes/stats';
 import { HonoEnv } from './types/hono';
 
+// Environment Check
+const requiredEnv = ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
+const missingEnv = requiredEnv.filter(k => !process.env[k]);
+
+if (missingEnv.length > 0) {
+  console.error('\x1b[31m%s\x1b[0m', `CRITICAL ERROR: Missing environment variables: ${missingEnv.join(', ')}`);
+  console.error('\x1b[33m%s\x1b[0m', 'Please check your .env file or deployment settings.');
+}
+
 const app = new Hono<{ Variables: HonoEnv['Variables'] }>();
 
 // Middleware
@@ -37,7 +46,12 @@ app.use('*', async (c, next) => {
 });
 
 // Routes
-app.get('/', (c) => c.text('TypeFast Backend API is running!'));
+app.get('/', (c) => c.json({
+  status: 'online',
+  message: 'TypeFast Backend API',
+  environment: missingEnv.length === 0 ? 'configured' : 'missing_config',
+  missing_vars: missingEnv.length > 0 ? missingEnv : undefined
+}));
 
 app.route('/api/auth', authRoutes);
 app.route('/api/user', userRoutes);
@@ -47,8 +61,12 @@ app.route('/api', statsRoutes);
 
 // Error Handling
 app.onError((err, c) => {
-  console.error(`${err}`);
-  return c.json({ error: 'Internal Server Error', message: err.message }, 500);
+  console.error(`App Error: ${err}`);
+  return c.json({
+    error: 'Internal Server Error',
+    message: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  }, 500);
 });
 
 export default {
